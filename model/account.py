@@ -5,11 +5,17 @@ class Account:
         self.balance = float(balance)
 
     def deposit(self, amount):
+        """
+        Sets new balance after depositing amount
+        :param amount: amount to be deposited
+        :return:
+        """
         self.balance += amount
 
     def withdraw(self, amount):
-        if self.balance - amount < 0:
-            self.balance -= amount
-            self.balance -= 5.0
-        else:
-            self.balance -= amount
+        """
+        Sets new balance after withdrawing amount.
+        :param amount: amount to be withdrawn
+        :return:
+        """
+        self.balance -= amount

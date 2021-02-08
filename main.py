@@ -13,6 +13,10 @@ timer_thread = None
 
 
 def count_down():
+    """
+    Counts timer down. When timer reaches 0 without interruption, currently authorized account gets logged out
+    :return:
+    """
     global timer
     global clock_running
     while clock_running and timer > 0:
@@ -27,11 +31,19 @@ def count_down():
 
 
 def reset_timer():
+    """
+    Resets timer to 2 minutes
+    :return:
+    """
     global timer
     timer = 120
 
 
 def start_timer():
+    """
+    Create a thread for countdown function and run it
+    :return:
+    """
     global clock_running
     global timer_thread
     reset_timer()
@@ -41,12 +53,21 @@ def start_timer():
 
 
 def stop_timer():
+    """
+    Stops current timer thread and briefly wait for current thread to close
+    :return:
+    """
     global clock_running
     clock_running = False
     sleep(1)
 
 
 def authorize(args):
+    """
+    authorizes user's account id and pin number
+    :param args: command line input from the user as list
+    :return:
+    """
     global current_account
     global clock_running
     if len(args) < 3:
@@ -54,13 +75,13 @@ def authorize(args):
         return
 
     account = api.get_account_by_id(args[1])
-    if len(account) < 1:
+    if account is None:
         print('Authorization failed.')
         return
     # check if pin number is correct
-    if account[0].pin == args[2]:
+    if account.pin == args[2]:
         # set current session
-        current_account = account[0]
+        current_account = account
         print(current_account.account_id, 'successfully authorized.')
         if clock_running:
             stop_timer()
@@ -72,6 +93,10 @@ def authorize(args):
 
 
 def logout():
+    """
+    logs out current account if there is an authorized one
+    :return:
+    """
     global current_account
     if current_account is None:
         print('No account is currently authorized.')
@@ -83,6 +108,11 @@ def logout():
 
 
 def process_withdraw(amount):
+    """
+    processes withdrawal from the account and create transaction histories accordingly.
+    :param amount: requested withdrawal amount
+    :return:
+    """
     global current_account
     global atm_global_amount
     current_account.withdraw(amount)
@@ -90,14 +120,21 @@ def process_withdraw(amount):
     print('Amount dispensed: $', amount)
     atm_global_amount -= amount
 
-    if (current_account.balance < 0):
-        print('You have been charged an overdraft fee of $5. Current balance:', current_account.balance)
+    if current_account.balance < 0:
+        current_account.withdraw(5)
+        sleep(1)
         api.create_transaction_history(current_account, -5)
+        print('You have been charged an overdraft fee of $5. Current balance:', current_account.balance)
     else:
         print('Current balance:', current_account.balance)
 
 
 def withdraw(args):
+    """
+    withdraws requested amount from an account.
+    :param args: command line input from the user as list
+    :return:
+    """
     global current_account
     global atm_global_amount
     if current_account is None:
@@ -121,6 +158,11 @@ def withdraw(args):
 
 
 def deposit(args):
+    """
+    deposits requested amount to the account and create transaction history accordingly
+    :param args: command line input from the user as list
+    :return:
+    """
     global current_account
     if current_account is None:
         print('Authorization is required.')
@@ -139,6 +181,10 @@ def deposit(args):
 
 
 def balance():
+    """
+    Prints total balance of currently authorized account
+    :return:
+    """
     global current_account
     if current_account is None:
         print('Authorization is required.')
@@ -147,9 +193,10 @@ def balance():
 
 
 def history():
-    '''
+    """
+    Prints all transaction histories of currently authorized account
     :return:
-    '''
+    """
     global current_account
     if current_account is None:
         print('Authorization is required.')
@@ -165,6 +212,10 @@ def history():
 
 
 def atm():
+    """
+    Takes user input command for the ATM and processes them until termination
+    :return:
+    """
     global session_end
     global current_account
     global timer

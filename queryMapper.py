@@ -2,19 +2,22 @@ from model.account import Account
 from model.transaction_history import TransactionHistory
 
 
-def queries_to_accounts(query_array):
-    result = []
-    for tup in query_array:
-        listed = list(tup)
-        if len(listed) < 3:
-            raise ValueError("Not enough values in the tuple!", tup)
-        else:
-            result.append(Account(listed[0], listed[1], listed[2]))
+def query_to_account(query_array):
+    """
+    Maps database query to an Account object
+    :param query_array: db query to convert
+    :return: Account object or None if not found
+    """
 
-    return result
+    return Account(query_array[0], query_array[1], query_array[2]) if len(query_array) > 2 else None
 
 
 def queries_to_histories(query_array):
+    """
+    Maps database queries to array of transaction histories
+    :param query_array: db query to convert
+    :return: array of transaction histories
+    """
     result = []
     for tup in query_array:
         listed = list(tup)

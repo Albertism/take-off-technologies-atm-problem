@@ -3,17 +3,27 @@ import database
 
 
 def get_account_by_id(account_id):
+    """
+    Fetches account that has matching account id
+    :param account_id: requested account id
+    :return: requested account if found
+    """
     conn = database.get_connection()
     c = conn.cursor()
     c.execute("""SELECT * FROM account WHERE account_id = :id""", {'id': account_id})
 
-    accounts = queryMapper.queries_to_accounts(c.fetchall())
-    print(' accounts are here:', accounts)
+    account = queryMapper.query_to_account(list(c.fetchone()))
 
-    return accounts
+    return account
 
 
 def create_transaction_history(account, amount):
+    """
+    Creates transaction history of requested account
+    :param account: account requested
+    :param amount: amount of transaction requested
+    :return:
+    """
     conn = database.get_connection()
     c = conn.cursor()
     c.execute("""INSERT INTO transaction_history VALUES(
@@ -27,8 +37,12 @@ def create_transaction_history(account, amount):
            'balance': account.balance})
 
 
-
 def get_transaction_histories(account_id):
+    """
+    Get transaction histories of requested account
+    :param account_id:
+    :return: list of transaction histories
+    """
     conn = database.get_connection()
     c = conn.cursor()
     c.execute("""SELECT * FROM transaction_history WHERE account_id = :id
@@ -39,8 +53,16 @@ def get_transaction_histories(account_id):
 
 
 def initialize_db():
+    """
+    Initializes tables and default entries in the database if it doesn't already exist.
+    :return:
+    """
     database.initialize_db()
 
 
 def close_db_connection():
+    """
+    Closes current database connection
+    :return:
+    """
     database.close_connection()

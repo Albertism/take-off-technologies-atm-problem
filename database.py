@@ -1,5 +1,5 @@
 import sqlite3
-from queryMapper import queries_to_accounts
+from queryMapper import query_to_account
 from model.account import Account
 
 connection = None
@@ -7,6 +7,10 @@ connection = None
 
 # creates connection to the database
 def get_connection():
+    """
+    Fetches current database connection. If there isn't one, create one
+    :return: Currently open database connection
+    """
     global connection
     if connection is None:
         connection = sqlite3.connect('atm.db')
@@ -16,11 +20,19 @@ def get_connection():
 
 # closes connection to the database
 def close_connection():
+    """
+    Closes currently open database connection
+    :return:
+    """
     connection.close()
 
 
 # initializes account data
 def initialize_db():
+    """
+    Initializes tables and default entries in the database if it doesn't already exist.
+    :return:
+    """
     conn = get_connection()
     c = conn.cursor()
     c.execute("DROP TABLE IF EXISTS account")
