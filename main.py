@@ -1,14 +1,55 @@
-from model.account import Account
+import sys
 import api
 import database
+from threading import Thread
+from time import sleep
+
 
 session_end = False
 current_account = None
 atm_global_amount = 10000.0
+clock_running = False
+timer = 120
+timer_thread = None
+
+
+def count_down():
+    global timer
+    global clock_running
+    while clock_running and timer > 0:
+        timer -= 1
+        sleep(1)
+    if clock_running:
+        print('\nLogged out due to inactivity.')
+        logout()
+        print('Type your command: ')
+    else:
+        sys.exit()
+
+
+def reset_timer():
+    global timer
+    timer = 120
+
+
+def start_timer():
+    global clock_running
+    global timer_thread
+    reset_timer()
+    clock_running = True
+    timer_thread = Thread(target=count_down)
+    timer_thread.start()
+
+
+def stop_timer():
+    global clock_running
+    clock_running = False
+    sleep(1)
 
 
 def authorize(args, conn):
     global current_account
+    global clock_running
     if len(args) < 3:
         print('Invalid command. Please provide an account id and a pin.')
         return
@@ -22,6 +63,9 @@ def authorize(args, conn):
         # set current session
         current_account = account[0]
         print(current_account.account_id, 'successfully authorized.')
+        if clock_running:
+            stop_timer()
+        start_timer()
         return
     else:
         print('Authorization failed.')
@@ -36,6 +80,7 @@ def logout():
     else:
         print('Account', current_account.account_id, 'logged out.')
         current_account = None
+        stop_timer()
 
 
 def process_withdraw(amount, conn):
@@ -117,33 +162,44 @@ def history(conn):
             print(h.date, h.time, h.amount, h.balance)
 
 
-# Establish db connection and initialize
-conn = database.create_connection()
-database.initialize_db(conn)
-# Main session
-while not session_end:
-    command_input = list(input("Type your command: ").split())
-    if len(command_input) < 1:
-        print('Please provide a command.')
-    elif command_input[0] == 'end':
-        database.close_connection()
-        session_end = True
-    elif command_input[0] == 'authorize':
-        authorize(command_input, conn)
-    elif command_input[0] == 'withdraw':
-        withdraw(command_input, conn)
-    elif command_input[0] == 'deposit':
-        deposit(command_input, conn)
-    elif command_input[0] == 'balance':
-        balance()
-    elif command_input[0] == 'history':
-        history(conn)
-    elif command_input[0] == 'logout':
-        logout()
-    elif command_input[0] == 'session':
-        print('current account: ', current_account.account_id if current_account else 'None')
-        print('current global amount: ', atm_global_amount)
-    else:
-        print('Unknown Command')
+def atm():
+    global session_end
+    global current_account
+    global timer
+    # Establish db connection and initialize
+    conn = database.create_connection()
+    database.initialize_db(conn)
+    # Main session
+    while not session_end:
+        command_input = list(input("Type your command: \n").split())
+        if len(command_input) < 1:
+            print('Please provide a command.')
+        elif command_input[0] == 'end':
+            database.close_connection()
+            session_end = True
+        elif command_input[0] == 'authorize':
+            authorize(command_input, conn)
+        elif command_input[0] == 'withdraw':
+            withdraw(command_input, conn)
+        elif command_input[0] == 'deposit':
+            deposit(command_input, conn)
+        elif command_input[0] == 'balance':
+            balance()
+        elif command_input[0] == 'history':
+            history(conn)
+        elif command_input[0] == 'logout':
+            logout()
+        elif command_input[0] == 'session':
+            print('current account: ', current_account.account_id if current_account else 'None')
+            print('current global amount: ', atm_global_amount)
+            print('timer: ', timer)
+        else:
+            print('Unknown Command')
 
-    print('\n')
+        reset_timer()
+        print('\n')
+
+
+# start the main thread
+main_thread = Thread(target=atm)
+main_thread.start()
