@@ -1,6 +1,5 @@
 import sys
 import api
-import database
 from threading import Thread
 from time import sleep
 
@@ -47,14 +46,14 @@ def stop_timer():
     sleep(1)
 
 
-def authorize(args, conn):
+def authorize(args):
     global current_account
     global clock_running
     if len(args) < 3:
         print('Invalid command. Please provide an account id and a pin.')
         return
 
-    account = api.get_account_by_id(args[1], conn)
+    account = api.get_account_by_id(args[1])
     if len(account) < 1:
         print('Authorization failed.')
         return
@@ -83,22 +82,22 @@ def logout():
         stop_timer()
 
 
-def process_withdraw(amount, conn):
+def process_withdraw(amount):
     global current_account
     global atm_global_amount
     current_account.withdraw(amount)
-    api.create_transaction_history(current_account, -amount, conn)
+    api.create_transaction_history(current_account, -amount)
     print('Amount dispensed: $', amount)
     atm_global_amount -= amount
 
     if (current_account.balance < 0):
         print('You have been charged an overdraft fee of $5. Current balance:', current_account.balance)
-        api.create_transaction_history(current_account, -5, conn)
+        api.create_transaction_history(current_account, -5)
     else:
         print('Current balance:', current_account.balance)
 
 
-def withdraw(args, conn):
+def withdraw(args):
     global current_account
     global atm_global_amount
     if current_account is None:
@@ -116,12 +115,12 @@ def withdraw(args, conn):
         return
     if amount > atm_global_amount:
         print('Unable to dispense full amount requested at this time.')
-        process_withdraw(atm_global_amount, conn)
+        process_withdraw(atm_global_amount)
     else:
-        process_withdraw(amount, conn)
+        process_withdraw(amount)
 
 
-def deposit(args, conn):
+def deposit(args):
     global current_account
     if current_account is None:
         print('Authorization is required.')
@@ -135,7 +134,7 @@ def deposit(args, conn):
             print('Invalid deposit amount. Please provide positive amount.')
             return
         current_account.deposit(amount)
-        api.create_transaction_history(current_account, amount, conn)
+        api.create_transaction_history(current_account, amount)
         print('Current balance:', current_account.balance)
 
 
@@ -147,13 +146,16 @@ def balance():
     print('Current balance:', current_account.balance)
 
 
-def history(conn):
+def history():
+    '''
+    :return:
+    '''
     global current_account
     if current_account is None:
         print('Authorization is required.')
         return
 
-    histories = api.get_transaction_histories(current_account.account_id, conn)
+    histories = api.get_transaction_histories(current_account.account_id)
 
     if len(histories) < 1:
         print('No history found')
@@ -166,27 +168,26 @@ def atm():
     global session_end
     global current_account
     global timer
-    # Establish db connection and initialize
-    conn = database.create_connection()
-    database.initialize_db(conn)
+    # Initializes database
+    api.initialize_db()
     # Main session
     while not session_end:
         command_input = list(input("Type your command: \n").split())
         if len(command_input) < 1:
             print('Please provide a command.')
         elif command_input[0] == 'end':
-            database.close_connection()
+            api.close_db_connection()
             session_end = True
         elif command_input[0] == 'authorize':
-            authorize(command_input, conn)
+            authorize(command_input)
         elif command_input[0] == 'withdraw':
-            withdraw(command_input, conn)
+            withdraw(command_input)
         elif command_input[0] == 'deposit':
-            deposit(command_input, conn)
+            deposit(command_input)
         elif command_input[0] == 'balance':
             balance()
         elif command_input[0] == 'history':
-            history(conn)
+            history()
         elif command_input[0] == 'logout':
             logout()
         elif command_input[0] == 'session':

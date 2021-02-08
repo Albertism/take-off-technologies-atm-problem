@@ -2,21 +2,26 @@ import sqlite3
 from queryMapper import queries_to_accounts
 from model.account import Account
 
+connection = None
+
 
 # creates connection to the database
-def create_connection():
-    conn = sqlite3.connect('atm.db')
+def get_connection():
+    global connection
+    if connection is None:
+        connection = sqlite3.connect('atm.db')
 
-    return conn
+    return connection
 
 
 # closes connection to the database
-def close_connection(conn):
-    conn.close()
+def close_connection():
+    connection.close()
 
 
 # initializes account data
-def initialize_db(conn):
+def initialize_db():
+    conn = get_connection()
     c = conn.cursor()
     c.execute("DROP TABLE IF EXISTS account")
     c.execute("DROP TABLE IF EXISTS transaction_history")
@@ -43,4 +48,5 @@ def initialize_db(conn):
         c.execute("""INSERT INTO account VALUES('7089382418','0075',0.00)""")
     else:
         return
+
 
