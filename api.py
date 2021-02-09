@@ -12,7 +12,8 @@ def get_account_by_id(account_id):
     c = conn.cursor()
     c.execute("""SELECT * FROM account WHERE account_id = :id""", {'id': account_id})
 
-    account = queryMapper.query_to_account(list(c.fetchone()))
+    query_array = list(c.fetchone())
+    account = queryMapper.query_to_account(query_array)
 
     return account
 
@@ -35,6 +36,23 @@ def create_transaction_history(account, amount):
     )""", {'account_id': account.account_id,
            'amount': amount,
            'balance': account.balance})
+    conn.commit()
+
+
+def update_account_balance(account):
+    """
+    Updates account with the new balance
+    :param account: account to be updated
+    :return:
+    """
+    conn = database.get_connection()
+    c = conn.cursor()
+    c.execute("""UPDATE account
+        SET balance = :balance
+        WHERE account_id = :account_id
+    """, {'balance': account.balance, 'account_id': account.account_id})
+
+    conn.commit()
 
 
 def get_transaction_histories(account_id):

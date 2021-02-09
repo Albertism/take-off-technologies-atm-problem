@@ -116,6 +116,7 @@ def process_withdraw(amount):
     global current_account
     global atm_global_amount
     current_account.withdraw(amount)
+    api.update_account_balance(current_account)
     api.create_transaction_history(current_account, -amount)
     print('Amount dispensed: $', amount)
     atm_global_amount -= amount
@@ -123,6 +124,7 @@ def process_withdraw(amount):
     if current_account.balance < 0:
         current_account.withdraw(5)
         sleep(1)
+        api.update_account_balance(current_account)
         api.create_transaction_history(current_account, -5)
         print('You have been charged an overdraft fee of $5. Current balance:', current_account.balance)
     else:
@@ -176,6 +178,7 @@ def deposit(args):
             print('Invalid deposit amount. Please provide positive amount.')
             return
         current_account.deposit(amount)
+        api.update_account_balance(current_account)
         api.create_transaction_history(current_account, amount)
         print('Current balance:', current_account.balance)
 
@@ -228,6 +231,7 @@ def atm():
             print('Please provide a command.')
         elif command_input[0] == 'end':
             api.close_db_connection()
+            stop_timer()
             session_end = True
         elif command_input[0] == 'authorize':
             authorize(command_input)
