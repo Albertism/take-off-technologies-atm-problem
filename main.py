@@ -245,10 +245,6 @@ def atm():
             history()
         elif command_input[0] == 'logout':
             logout()
-        elif command_input[0] == 'session':
-            print('current account: ', current_account.account_id if current_account else 'None')
-            print('current global amount: ', atm_global_amount)
-            print('timer: ', timer)
         else:
             print('Unknown Command')
 
